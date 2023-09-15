@@ -1,87 +1,60 @@
-;Assembly Final Project
-;William Campbell
-
-
-;Here is an initial example of how mktime works in assembly:
-;https://stackoverflow.com/a/19172500
-
-
-;I built off this idea to create a functional planner calender that:
-;
-;	1. starts at the current month.
-;	2. is able to be traverse backward and forward month at a time.
-;	3. creates and removes events that are associated with each month.
-;		a. each event is sorted when printed out to the terminal.
-;	4. functional clear_screen and raw_mode utilization that makes
-;	   traversing and exiting the calender look nice.
-;	5. can traverse from the year 1909 to the year 2038.
-
-
-;There are also future fixes and implementations I would like to take note of:
-;
-;	1. Implement leap year.
-;	2. Make events unique to the specific month of the year.
-;	3. Make multiple events for a single day.
-
-
 %include "/usr/local/share/csc314/asm_io.inc"
 %define tm_mday 12
 %define tm_mon 16
 %define tm_wday 24
 
 segment .data
-	fmtcalender 	  db "Sun Mon Tue Wed Thu Fri Sat", 10, 0
-	fmtmonth    	  db "%B", 0
-	fmtmonthyear      db "%13B %Y", 10, 0
-	fmtint            db "%d", 0
-	fmtstring         db "%s", 0
-	fmtentry          db "%d %s", 10, 0
-	fmtentryint       db "%d ", 0
+	fmtcalender		db "Sun Mon Tue Wed Thu Fri Sat", 10, 0
+	fmtmonth		db "%B", 0
+	fmtmonthyear	db "%13B %Y", 10, 0
+	fmtint			db "%d", 0
+	fmtstring		db "%s", 0
+	fmtentry		db "%d %s", 10, 0
+	fmtentryint		db "%d ", 0
 
-	raw_mode_on_cmd   db "stty raw -echo",0
-	raw_mode_off_cmd  db "stty -raw echo",0
+	raw_mode_on_cmd		db "stty raw -echo",0
+	raw_mode_off_cmd	db "stty -raw echo",0
 
-	Jan  			  db "January", 0
-	Feb				  db "February", 0
-	Mar 			  db "March", 0
-	Apr 			  db "April", 0
-	May 			  db "May", 0
-	Jun 			  db "June", 0
-	Jul 			  db "July", 0
-	Aug 			  db "August", 0
-	Sep 			  db "September", 0
-	Oct 			  db "October", 0
-	Nov 			  db "November", 0
-	Decm			  db "December", 0
+	Jan		db "January", 0
+	Feb		db "February", 0
+	Mar		db "March", 0
+	Apr		db "April", 0
+	May		db "May", 0
+	Jun		db "June", 0
+	Jul		db "July", 0
+	Aug		db "August", 0
+	Sep		db "September", 0
+	Oct		db "October", 0
+	Nov		db "November", 0
+	Decm	db "December", 0
 
-	Sun 	          db "Sunday", 0
-	Mon     	      db "Monday", 0
-	Tue         	  db "Tuesday", 0
-	Wed         	  db "Wednsday", 0
-	Thu         	  db "Thursday", 0
-	Fri         	  db "Friday", 0
-	Sat         	  db "Saturday", 0
+	Sun	db "Sunday", 0
+	Mon	db "Monday", 0
+	Tue	db "Tuesday", 0
+	Wed	db "Wednsday", 0
+	Thu	db "Thursday", 0
+	Fri	db "Friday", 0
+	Sat	db "Saturday", 0
 
-	SunMonth 		  db "%3d %3d %3d %3d %3d %3d %3d", 10, 0
-	MonMonth    	  db "    %3d %3d %3d %3d %3d %3d", 10, 0
-	TueMonth 		  db "        %3d %3d %3d %3d %3d", 10, 0
-	WedMonth 		  db "            %3d %3d %3d %3d", 10, 0
-	ThuMonth 		  db "                %3d %3d %3d", 10, 0
-	FriMonth 		  db "                    %3d %3d", 10, 0
-	SatMonth 		  db "                        %3d", 10, 0
+	SunMonth	db "%3d %3d %3d %3d %3d %3d %3d", 10, 0
+	MonMonth	db "	%3d %3d %3d %3d %3d %3d", 10, 0
+	TueMonth	db "		%3d %3d %3d %3d %3d", 10, 0
+	WedMonth	db "			%3d %3d %3d %3d", 10, 0
+	ThuMonth	db "				%3d %3d %3d", 10, 0
+	FriMonth	db "					%3d %3d", 10, 0
+	SatMonth	db "						%3d", 10, 0
 
-	MoreMonth 		  db "%3d ", 0
-	MoreMonthNL		  db "%3d ", 10, 0
+	MoreMonth	db "%3d ", 0
+	MoreMonthNL	db "%3d ", 10, 0
 
-	Month             dd Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Decm
-	WeekDay     	  dd Sun, Mon, Tue, Wed, Thu, Fri, Sat
+	Month	dd Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Decm
+	WeekDay	dd Sun, Mon, Tue, Wed, Thu, Fri, Sat
 
-	Menu0             db "Add Event", 10, 0
-	Menu1             db "Enter a Day: ", 0
-	Menu2             db "Enter an event: ", 0
-
-	Menu3             db "Remove Event", 10, 0
-	Menu4             db "Enter a Day: ", 0
+	Menu0	db "Add Event", 10, 0
+	Menu1	db "Enter a Day: ", 0
+	Menu2	db "Enter an event: ", 0
+	Menu3	db "Remove Event", 10, 0
+	Menu4	db "Enter a Day: ", 0
 
 	clear_screen_code db 27,"[2J",27,"[H",0
 
@@ -97,17 +70,17 @@ segment .data
 	OctFile	db "/usr/local/share/csc314/Final/events/Oct.txt", 0
 	NovFile db "/usr/local/share/csc314/Final/events/Nov.txt", 0
 	DecFile db "/usr/local/share/csc314/Final/events/Dec.txt", 0
+	TmpFile db "/usr/local/share/csc314/Final/Tmp.txt", 0
 	mode_a  db "a", 0
 	mode_r  db "r", 0
 	mode_w  db "w", 0
-	TmpFile db "/usr/local/share/csc314/Final/Tmp.txt", 0
 
 segment .bss
-	timeinfo    	resd    1
-	rawtime     	resd    1
-	lpszBuffer  	resb    80
-	lineint         resd    4
-	linestring      resb    1024
+	timeinfo	resd	1
+	rawtime		resd	1
+	lpszBuffer	resb	80
+	lineint		resd	4
+	linestring	resb	1024
 
 segment .text
 	global asm_main
@@ -117,8 +90,8 @@ segment .text
 	global printEvents
 	global removeEvent
 
-    global raw_mode_on
-    global raw_mode_off
+	global raw_mode_on
+	global raw_mode_off
 	extern system
 
 	extern printf
@@ -144,28 +117,28 @@ asm_main:
 	mov esi, 0
 
 	;recieve today's date
-    push rawtime
-    call time
-    add esp, 4
+	push rawtime
+	call time
+	add esp, 4
 
-    push rawtime
-    call localtime
-    add esp, 4
+	push rawtime
+	call localtime
+	add esp, 4
 
 	mov dword [timeinfo], eax
 
 	;find the first of the month
 	mov dword [eax + tm_mday], 1
 
-	push    dword [timeinfo]
-    call    mktime
-    add     esp, 4
+	push	dword [timeinfo]
+	call	mktime
+	add	 esp, 4
 
 
 	call makeCalender
 
 
-    toptoptop:
+	toptoptop:
 
 	call raw_mode_on
 
@@ -200,12 +173,12 @@ asm_main:
 		mov ebx, eax; ebx = chosen day
 
 		push rawtime
-	    call time
-	    add esp, 4
+		call time
+		add esp, 4
 
-	    push rawtime
-	    call localtime
-	    add esp, 4
+		push rawtime
+		call localtime
+		add esp, 4
 
 		mov dword [timeinfo], eax
 
@@ -214,15 +187,15 @@ asm_main:
 		add dword[eax + tm_mon], esi
 
 		push dword [timeinfo]
-	    call mktime
-	    add esp, 4
+		call mktime
+		add esp, 4
 
-	    push dword [timeinfo]
-	    push fmtmonth
-	    push 80
-	    push lpszBuffer
-	    call strftime
-	    add esp, 16
+		push dword [timeinfo]
+		push fmtmonth
+		push 80
+		push lpszBuffer
+		call strftime
+		add esp, 16
 
 		call getchar
 
@@ -245,7 +218,7 @@ asm_main:
 
 		mov eax, dword[timeinfo]
 		mov eax, dword[eax + tm_mon]
-	    mov ecx, dword[Month + 4 * eax]
+		mov ecx, dword[Month + 4 * eax]
 
 		cmp ecx, Jan
 		jne notJan2
@@ -337,12 +310,12 @@ asm_main:
 		add esp, 4
 
 		push rawtime
-	    call time
-	    add esp, 4
+		call time
+		add esp, 4
 
-	    push rawtime
-	    call localtime
-	    add esp, 4
+		push rawtime
+		call localtime
+		add esp, 4
 
 		mov dword [timeinfo], eax
 
@@ -369,7 +342,7 @@ asm_main:
 
 		mov eax, dword[timeinfo]
 		mov eax, dword[eax + tm_mon]
-	    mov ecx, dword[Month + 4 * eax]
+		mov ecx, dword[Month + 4 * eax]
 
 		cmp ecx, Jan
 		jne notJan4
@@ -469,12 +442,12 @@ asm_main:
 		notDec4:
 
 		push rawtime
-	    call time
-	    add esp, 4
+		call time
+		add esp, 4
 
-	    push rawtime
-	    call localtime
-	    add esp, 4
+		push rawtime
+		call localtime
+		add esp, 4
 
 		mov dword [timeinfo], eax
 
@@ -496,7 +469,7 @@ asm_main:
 	exit:
 	call raw_mode_off
 
-    push clear_screen_code
+	push clear_screen_code
 	call printf
 	add esp, 4
 
@@ -507,28 +480,28 @@ asm_main:
 	ret
 
 raw_mode_on:
-    push    ebp
-    mov     ebp, esp
+	push	ebp
+	mov	 ebp, esp
 
-	push    raw_mode_on_cmd
-    call    system
-    add     esp, 4
+	push	raw_mode_on_cmd
+	call	system
+	add	 esp, 4
 
-    mov     esp, ebp
-    pop     ebp
-    ret
+	mov	 esp, ebp
+	pop	 ebp
+	ret
 
 raw_mode_off:
-    push    ebp
-    mov     ebp, esp
+	push	ebp
+	mov	 ebp, esp
 
-	push    raw_mode_off_cmd
-    call    system
-    add     esp, 4
+	push	raw_mode_off_cmd
+	call	system
+	add	 esp, 4
 
-    mov     esp, ebp
-    pop     ebp
-    ret
+	mov	 esp, ebp
+	pop	 ebp
+	ret
 
 increment:
 	push ebp
@@ -537,12 +510,12 @@ increment:
 	inc esi
 
 	push rawtime
-    call time
-    add esp, 4
+	call time
+	add esp, 4
 
-    push rawtime
-    call localtime
-    add esp, 4
+	push rawtime
+	call localtime
+	add esp, 4
 
 	mov dword [timeinfo], eax
 
@@ -550,9 +523,9 @@ increment:
 
 	add dword[eax + tm_mon], esi
 
-	push    dword [timeinfo]
-    call    mktime
-    add     esp, 4
+	push	dword [timeinfo]
+	call	mktime
+	add	 esp, 4
 
 	call makeCalender
 
@@ -568,12 +541,12 @@ decrement:
 	dec esi
 
 	push rawtime
-    call time
-    add esp, 4
+	call time
+	add esp, 4
 
-    push rawtime
-    call localtime
-    add esp, 4
+	push rawtime
+	call localtime
+	add esp, 4
 
 	mov dword [timeinfo], eax
 
@@ -581,9 +554,9 @@ decrement:
 
 	add dword[eax + tm_mon], esi
 
-	push    dword [timeinfo]
-    call    mktime
-    add     esp, 4
+	push dword [timeinfo]
+	call mktime
+	add esp, 4
 
 	call makeCalender
 
@@ -598,19 +571,19 @@ makeCalender:
 	sub esp, 4; amount of days in month, dword[ebp-4]
 
 
-    push clear_screen_code
+	push clear_screen_code
 	call printf
 	add esp, 4
 
 	call print_nl
 
 
-    push dword [timeinfo]
-    push fmtmonthyear
-    push 80
-    push lpszBuffer
-    call strftime
-    add esp, 4 * 4
+	push dword [timeinfo]
+	push fmtmonthyear
+	push 80
+	push lpszBuffer
+	call strftime
+	add esp, 4 * 4
 
 	push lpszBuffer
 	call printf
@@ -622,7 +595,7 @@ makeCalender:
 
 	mov eax, dword[timeinfo]
 	mov eax, dword[eax + tm_mon]
-    mov ecx, dword[Month + 4 * eax]
+	mov ecx, dword[Month + 4 * eax]
 
 	cmp ecx, Jan
 	jne notJan
@@ -680,9 +653,9 @@ makeCalender:
 
 	;also, this part looks repetitive, and function worthy, however i will do this in the future due to time constraints and the amounts of different values used
 
-    mov     eax, dword [timeinfo]
-    mov     eax, dword [eax + tm_wday]
-    mov     ecx, dword [WeekDay + 4 * eax]
+	mov	 eax, dword [timeinfo]
+	mov	 eax, dword [eax + tm_wday]
+	mov	 ecx, dword [WeekDay + 4 * eax]
 
 	cmp ecx, Sun
 	jne notSun
@@ -1027,7 +1000,7 @@ makeCalender:
 
 	mov eax, dword[timeinfo]
 	mov eax, dword[eax + tm_mon]
-    mov ecx, dword[Month + 4 * eax]
+	mov ecx, dword[Month + 4 * eax]
 
 	cmp ecx, Jan
 	jne notJan3
@@ -1134,8 +1107,8 @@ makeCalender:
 
 
 printEvents:
-    push    ebp
-    mov     ebp, esp
+	push	ebp
+	mov	 ebp, esp
 
 	mov ebx, 1
 	mov edx, 1
@@ -1177,7 +1150,7 @@ printEvents:
 		mov edx, 0
 		writeloop:
 
-		 	cmp byte[linestring + edx * 1], '_'
+			 cmp byte[linestring + edx * 1], '_'
 			jne cont
 
 				mov al,  ' '
@@ -1231,13 +1204,13 @@ printEvents:
 
 	done:
 
-    mov     esp, ebp
-    pop     ebp
-    ret
+	mov	 esp, ebp
+	pop	 ebp
+	ret
 
 makeEvent:
-    push    ebp
-    mov     ebp, esp
+	push	ebp
+	mov	 ebp, esp
 
 	push mode_a
 	push dword[ebp+8]
@@ -1250,17 +1223,17 @@ makeEvent:
 	push fmtentry
 	push edi
 	call fprintf
-    add esp, 16
+	add esp, 16
 
 	call print_nl
 
-    mov     esp, ebp
-    pop     ebp
-    ret
+	mov	 esp, ebp
+	pop	 ebp
+	ret
 
 removeEvent:
-    push    ebp
-    mov     ebp, esp
+	push	ebp
+	mov	 ebp, esp
 
 	sub esp, 4
 
@@ -1299,7 +1272,7 @@ removeEvent:
 		call fgetc
 		add esp, 4
 
-        cmp eax, -1
+		cmp eax, -1
 		je elses
 
 		push linestring
@@ -1307,7 +1280,7 @@ removeEvent:
 		push fmtentry
 		push dword[ebp-4]
 		call fprintf
-	 	add esp, 16
+		 add esp, 16
 
 		jmp topo
 
@@ -1324,7 +1297,7 @@ removeEvent:
 	call fgetc
 	add esp, 4
 
-    cmp eax, -1
+	cmp eax, -1
 	je elses
 
 
@@ -1376,7 +1349,7 @@ removeEvent:
 	call fgetc
 	add esp, 4
 
-    cmp eax, -1
+	cmp eax, -1
 	je exitcopy
 
 	push linestring
@@ -1384,7 +1357,7 @@ removeEvent:
 	push fmtentry
 	push edi
 	call fprintf
- 	add esp, 16
+	add esp, 16
 
 
 	jmp topcopy
@@ -1403,6 +1376,6 @@ removeEvent:
 
 
 
-    mov     esp, ebp
-    pop     ebp
-    ret
+	mov	 esp, ebp
+	pop	 ebp
+	ret

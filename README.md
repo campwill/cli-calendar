@@ -1,4 +1,4 @@
-# cli-calendar
+# CLI Calendar
 A linux command line calendar written in 32-bit x86 assembly. Prints and tracks user submitted events.
 
 <div align="center">

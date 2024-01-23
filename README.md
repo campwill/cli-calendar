@@ -1,6 +1,10 @@
 # cli-calendar
 A linux command line calendar written in 32-bit x86 assembly. Prints and tracks user submitted events.
 
+<div align="center">
+  <img width="400" src="screenshot.png">
+</div>&nbsp;
+
 Here is an initial example of how mktime works in assembly: https://stackoverflow.com/a/19172500
 
 I built off this idea to create a functional planner calendar that:
